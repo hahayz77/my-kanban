@@ -105,15 +105,14 @@ export const Navbar = ({
 
       {/* Right: Actions */}
       <div className="flex items-center gap-1.5">
-        {/* Add Card or Column Button */}
+        {/* Add Button (+ only) */}
         <button
           type="button"
           onClick={onOpenAdd}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition-colors"
-          title="Adicionar novo cartão ou nova coluna"
+          className="w-7 h-7 flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition-colors"
+          title="Adicionar novo cartão, coluna ou etiqueta"
         >
-          <Plus className="w-3.5 h-3.5" />
-          <span>Adicionar</span>
+          <Plus className="w-4 h-4" />
         </button>
 
         {/* Import Trello / Backup */}

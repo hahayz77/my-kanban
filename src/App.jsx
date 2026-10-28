@@ -135,13 +135,14 @@ export const App = () => {
         />
       </main>
 
-      {/* Add Card or Column Modal */}
+      {/* Add Card, Column or Label Modal */}
       <AddModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         columns={columns}
         onAddCard={addCard}
         onAddColumn={addColumn}
+        onAddLabel={addBoardLabel}
       />
 
       {/* Backup Confirmation Modal */}
