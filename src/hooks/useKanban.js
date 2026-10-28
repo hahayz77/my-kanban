@@ -148,9 +148,12 @@ export const useKanban = () => {
       }
 
       setStatus("saving")
+      setStatusMessage("Salvando...")
 
       try {
         await saveKanbanState(fullState)
+        // Ensure user visibly perceives the spinning indicator and "Salvando..." text
+        await new Promise((resolve) => setTimeout(resolve, 500))
         setStatus("saved")
         updateTimestampStatus("Atualizado às")
         debouncedDriveSync()
@@ -201,37 +204,9 @@ export const useKanban = () => {
       }
 
       if (savedState && savedState.board) {
-        // Clean up any cards where stickers were automatically assigned in error
-        const updatedCards = (savedState.cards || []).map((card) => {
-          const upper = (card.title || "").trim().toUpperCase()
-          // Only PRÓXIMOS OBJETIVOS retains the alert PC sticker by default
-          if (upper === "PRÓXIMOS OBJETIVOS") {
-            return card.sticker
-              ? card
-              : { ...card, sticker: { type: "builtin", id: "pc-alert" } }
-          }
-
-          // If sticker was auto-assigned to cards that should be clean/plain, remove it
-          if (
-            upper.includes("OBJETIVOS DO M") ||
-            upper.includes("PRIORIDADES") ||
-            upper.includes("HÁBITOS") ||
-            upper.includes("HABITOS") ||
-            upper.includes("POSTGRESQL") ||
-            upper.includes("ABRIL") ||
-            upper.includes("CURSO")
-          ) {
-            if (card.sticker && card.sticker.type === "builtin") {
-              const { sticker, ...rest } = card
-              return rest
-            }
-          }
-          return card
-        })
-
         setBoard(savedState.board)
-        setColumns(savedState.columns)
-        setCards(updatedCards)
+        setColumns(savedState.columns || [])
+        setCards(savedState.cards || [])
 
         // If no boardLabels stored yet, extract unique labels from cards
         if (!savedLabels || savedLabels.length === 0) {
@@ -625,30 +600,58 @@ export const useKanban = () => {
   )
 
   /**
-   * Adds a new card to a column
+   * Adds a new card to a specific column at either top or bottom
    * @param {string} columnId - ID of the target column
    * @param {Object} cardData - Initial card properties
+   * @param {"top"|"bottom"} [position="top"] - Insertion position (defaults to "top")
    */
   const addCard = useCallback(
-    (columnId, cardData) => {
-      const colCards = cards.filter((c) => c.columnId === columnId)
-      const newCard = {
-        id: "card-" + Date.now() + "-" + Math.random().toString(36).substr(2, 5),
-        columnId,
-        title: cardData.title || "Novo Card",
-        desc: cardData.desc || "",
-        order: colCards.length,
-        labels: cardData.labels || [],
-        due: cardData.due || null,
-        dueComplete: false,
-        cover: cardData.cover || null,
-        checklists: cardData.checklists || []
+    (columnId, cardData, position = "top") => {
+      const colCards = cards
+        .filter((c) => c.columnId === columnId)
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+      const otherCards = cards.filter((c) => c.columnId !== columnId)
+      const newCardId = "card-" + Date.now() + "-" + Math.random().toString(36).substr(2, 5)
+
+      let updatedColCards
+      if (position === "top") {
+        const newCard = {
+          id: newCardId,
+          columnId,
+          title: cardData.title || "Novo Card",
+          desc: cardData.desc || "",
+          order: 0,
+          labels: cardData.labels || [],
+          due: cardData.due || null,
+          dueComplete: false,
+          cover: cardData.cover || null,
+          checklists: cardData.checklists || []
+        }
+        const shiftedColCards = colCards.map((c, idx) => ({
+          ...c,
+          order: idx + 1
+        }))
+        updatedColCards = [newCard, ...shiftedColCards]
+      } else {
+        const newCard = {
+          id: newCardId,
+          columnId,
+          title: cardData.title || "Novo Card",
+          desc: cardData.desc || "",
+          order: colCards.length,
+          labels: cardData.labels || [],
+          due: cardData.due || null,
+          dueComplete: false,
+          cover: cardData.cover || null,
+          checklists: cardData.checklists || []
+        }
+        updatedColCards = [...colCards, newCard]
       }
 
       commitState({
         board,
         columns,
-        cards: [...cards, newCard]
+        cards: [...otherCards, ...updatedColCards]
       })
     },
     [board, columns, cards, commitState]

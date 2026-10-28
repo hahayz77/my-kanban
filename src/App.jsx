@@ -5,6 +5,9 @@ import { Board } from "./components/Board"
 import { CardModal } from "./components/CardModal"
 import { SettingsModal } from "./components/SettingsModal"
 import { ImportModal } from "./components/ImportModal"
+import { DriveConfigModal } from "./components/DriveConfigModal"
+import { AddModal } from "./components/AddModal"
+import { BackupConfirmModal } from "./components/BackupConfirmModal"
 import { BOARD_ENVIRONMENT_THEMES } from "./utils/trelloColors"
 
 /**
@@ -48,6 +51,9 @@ export const App = () => {
   } = useKanban()
 
   const [selectedCardId, setSelectedCardId] = useState(null)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isBackupModalOpen, setIsBackupModalOpen] = useState(false)
+  const [isDriveModalOpen, setIsDriveModalOpen] = useState(false)
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -103,17 +109,11 @@ export const App = () => {
         hasGoogleAuth={Boolean(accessToken)}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        onOpenAdd={() => setIsAddModalOpen(true)}
         onOpenImport={() => setIsImportModalOpen(true)}
-        onExportBackup={exportLocalBackup}
-        onSyncDrive={() => {
-          if (!accessToken) {
-            setIsSettingsModalOpen(true)
-          } else {
-            syncDriveNow()
-          }
-        }}
+        onOpenBackupConfirm={() => setIsBackupModalOpen(true)}
+        onOpenDrive={() => setIsDriveModalOpen(true)}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
-        onAddColumn={addColumn}
       />
 
       {/* Main Board Area */}
@@ -135,9 +135,41 @@ export const App = () => {
         />
       </main>
 
+      {/* Add Card or Column Modal */}
+      <AddModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        columns={columns}
+        onAddCard={addCard}
+        onAddColumn={addColumn}
+      />
+
+      {/* Backup Confirmation Modal */}
+      <BackupConfirmModal
+        isOpen={isBackupModalOpen}
+        onClose={() => setIsBackupModalOpen(false)}
+        onConfirm={exportLocalBackup}
+        boardTitle={board?.title || "Meu Kanban"}
+        columnsCount={columns.length}
+        cardsCount={cards.length}
+      />
+
+      {/* Dedicated Google Drive Sync Modal */}
+      <DriveConfigModal
+        isOpen={isDriveModalOpen}
+        onClose={() => setIsDriveModalOpen(false)}
+        googleClientId={googleClientId}
+        onSaveClientId={saveGoogleClientId}
+        accessToken={accessToken}
+        driveFileId={driveFileId}
+        onConnectDrive={(clientId) => connectGoogleDrive(clientId)}
+        onSyncNow={syncDriveNow}
+      />
+
       {/* Card Detail Modal */}
       {selectedCard && (
         <CardModal
+          key={selectedCard.id}
           card={selectedCard}
           columns={columns}
           boardLabels={boardLabels}
@@ -151,7 +183,7 @@ export const App = () => {
         />
       )}
 
-      {/* Comprehensive Settings Modal (Tags, Environment Colors, Column Width, Card Density, Google Drive) */}
+      {/* Settings Modal (Tags, Environment Colors, Column Width, Card Density) */}
       <SettingsModal
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
@@ -166,12 +198,6 @@ export const App = () => {
         onUpdateColumnWidth={updateColumnWidth}
         cardDensity={cardDensity}
         onUpdateCardDensity={updateCardDensity}
-        googleClientId={googleClientId}
-        onSaveClientId={saveGoogleClientId}
-        accessToken={accessToken}
-        driveFileId={driveFileId}
-        onConnectDrive={(clientId) => connectGoogleDrive(clientId)}
-        onSyncNow={syncDriveNow}
       />
 
       {/* Import Modal */}

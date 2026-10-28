@@ -3,15 +3,11 @@ import {
   X,
   Tag,
   Palette,
-  Cloud,
   Plus,
   Trash2,
   Edit2,
   Check,
   Search,
-  Key,
-  RefreshCw,
-  ExternalLink,
   Sparkles,
   Sliders,
   Rows
@@ -24,7 +20,7 @@ import {
 import { TrelloPatternIcon } from "./TrelloPatternIcon"
 
 /**
- * SettingsModal provides a wide, centralized settings center for Tags, Layout (Column Width, Card Height), Themes, and Drive Sync
+ * SettingsModal provides a wide, centralized settings center for Tags and Layout (Column Width, Card Height, Themes)
  * @param {Object} props - Component properties
  * @param {boolean} props.isOpen - Whether modal is visible
  * @param {Function} props.onClose - Close modal callback
@@ -39,12 +35,6 @@ import { TrelloPatternIcon } from "./TrelloPatternIcon"
  * @param {Function} props.onUpdateColumnWidth - Update column width callback
  * @param {string} props.cardDensity - Current card height density ("compact"|"normal"|"comfortable")
  * @param {Function} props.onUpdateCardDensity - Update card density callback
- * @param {string} props.googleClientId - Google OAuth Client ID
- * @param {Function} props.onSaveClientId - Save Client ID callback
- * @param {string} props.accessToken - Google access token
- * @param {string} props.driveFileId - Google Drive file ID
- * @param {Function} props.onConnectDrive - Connect Drive callback
- * @param {Function} props.onSyncNow - Trigger immediate Drive sync
  * @returns {JSX.Element|null} Rendered settings modal
  */
 export const SettingsModal = ({
@@ -60,19 +50,13 @@ export const SettingsModal = ({
   columnWidth = 220,
   onUpdateColumnWidth,
   cardDensity = "compact",
-  onUpdateCardDensity,
-  googleClientId = "",
-  onSaveClientId,
-  accessToken = "",
-  driveFileId = null,
-  onConnectDrive,
-  onSyncNow
+  onUpdateCardDensity
 }) => {
   if (!isOpen) {
     return null
   }
 
-  const [activeTab, setActiveTab] = useState("labels") // "labels" | "layout" | "drive"
+  const [activeTab, setActiveTab] = useState("labels") // "labels" | "layout"
   const [searchLabel, setSearchLabel] = useState("")
 
   // Label form state (for creating or editing)
@@ -80,10 +64,6 @@ export const SettingsModal = ({
   const [labelFormName, setLabelFormName] = useState("")
   const [labelFormColor, setLabelFormColor] = useState("green_dark")
   const [isFormOpen, setIsFormOpen] = useState(false)
-
-  // Drive Client ID state
-  const [clientIdInput, setClientIdInput] = useState(googleClientId || "")
-  const [isClientSaved, setIsClientSaved] = useState(false)
 
   /**
    * Calculates how many cards use a given label
@@ -143,15 +123,6 @@ export const SettingsModal = ({
     setIsFormOpen(false)
     setEditingLabelId(null)
     setLabelFormName("")
-  }
-
-  /**
-   * Saves Google Client ID
-   */
-  const handleSaveClientId = () => {
-    onSaveClientId(clientIdInput.trim())
-    setIsClientSaved(true)
-    setTimeout(() => setIsClientSaved(false), 2000)
   }
 
   const filteredLabels = boardLabels.filter((l) =>
@@ -249,19 +220,6 @@ export const SettingsModal = ({
           >
             <Palette className="w-3.5 h-3.5" />
             <span>Aparência, Colunas e Linhas</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("drive")}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-t-lg border-b-2 transition-all ${
-              activeTab === "drive"
-                ? "border-indigo-500 text-indigo-400 bg-slate-800/60"
-                : "border-transparent text-slate-400 hover:text-slate-200"
-            }`}
-          >
-            <Cloud className="w-3.5 h-3.5" />
-            <span>Google Drive</span>
           </button>
         </div>
 
@@ -622,123 +580,6 @@ export const SettingsModal = ({
                     )
                   })}
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 3: GOOGLE DRIVE SYNC */}
-          {activeTab === "drive" && (
-            <div className="space-y-5">
-              {/* Connection Status Card */}
-              <div className="p-4 rounded-xl bg-slate-800/80 border border-slate-700/80 flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">
-                    Status da Conexão
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`w-2.5 h-2.5 rounded-full ${
-                        accessToken
-                          ? "bg-emerald-500 animate-pulse"
-                          : "bg-slate-500"
-                      }`}
-                    />
-                    <span className="text-sm font-medium text-slate-200">
-                      {accessToken
-                        ? "Conectado ao Google Drive"
-                        : "Desconectado"}
-                    </span>
-                  </div>
-                  {driveFileId && (
-                    <p className="text-xs text-slate-400 mt-1 truncate max-w-sm">
-                      Arquivo ID:{" "}
-                      <span className="font-mono text-indigo-300">
-                        {driveFileId}
-                      </span>
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => onConnectDrive(clientIdInput.trim())}
-                    className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow transition-colors"
-                  >
-                    {accessToken ? "Reconectar" : "Conectar Conta"}
-                  </button>
-                  {accessToken && (
-                    <button
-                      type="button"
-                      onClick={onSyncNow}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-300 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
-                    >
-                      <RefreshCw className="w-3 h-3" />
-                      <span>Sincronizar Já</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Client ID Configuration */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                  <Key className="w-3.5 h-3.5 text-indigo-400" />
-                  Google OAuth 2.0 Client ID:
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={clientIdInput}
-                    onChange={(e) => setClientIdInput(e.target.value)}
-                    placeholder="Ex: 123456789-abcdefg.apps.googleusercontent.com"
-                    className="flex-1 px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleSaveClientId}
-                    className="px-4 py-2 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition-colors"
-                  >
-                    {isClientSaved ? "Salvo!" : "Salvar"}
-                  </button>
-                </div>
-              </div>
-
-              {/* Instructions Guide */}
-              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-400 space-y-2">
-                <p className="font-semibold text-slate-300 flex items-center gap-1">
-                  Como configurar a integração:
-                </p>
-                <ol className="list-decimal list-inside space-y-1 text-slate-400">
-                  <li>
-                    Acesse o{" "}
-                    <a
-                      href="https://console.cloud.google.com/apis/credentials"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-indigo-400 hover:underline inline-flex items-center gap-0.5"
-                    >
-                      Google Cloud Console <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </li>
-                  <li>Crie um projeto e ative a Google Drive API.</li>
-                  <li>
-                    Crie credenciais OAuth 2.0 do tipo{" "}
-                    <strong>Aplicativo da Web</strong>.
-                  </li>
-                  <li>
-                    Adicione em <em>Origens JavaScript autorizadas</em>:
-                    <code className="mx-1 px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300">
-                      http://localhost:5173
-                    </code>
-                  </li>
-                  <li>Cole o Client ID no campo acima e conecte a conta.</li>
-                </ol>
-                <p className="text-[11px] text-slate-500 pt-1">
-                  * O My Kanban sincroniza o arquivo{" "}
-                  <code className="text-slate-400">kanban_latest.json</code> com
-                  debounce de 3 segundos a cada drag & drop ou edição.
-                </p>
               </div>
             </div>
           )}

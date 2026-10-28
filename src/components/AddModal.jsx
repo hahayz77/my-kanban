@@ -1,0 +1,333 @@
+import React, { useState, useEffect, useRef } from "react"
+import { X, Plus, Layers, CreditCard, ArrowUp, ArrowDown } from "lucide-react"
+
+/**
+ * AddModal lets users add new cards (specifying column and position, defaulting to top)
+ * or append a new column to the end of the board
+ * @param {Object} props - Component properties
+ * @param {boolean} props.isOpen - Whether modal is visible
+ * @param {Function} props.onClose - Close modal callback
+ * @param {Array<Object>} props.columns - Board columns
+ * @param {Function} props.onAddCard - Add card callback (columnId, cardData, position)
+ * @param {Function} props.onAddColumn - Add column callback (title)
+ * @returns {JSX.Element|null} Rendered modal dialog
+ */
+export const AddModal = ({
+  isOpen,
+  onClose,
+  columns = [],
+  onAddCard,
+  onAddColumn
+}) => {
+  if (!isOpen) {
+    return null
+  }
+
+  const [activeTab, setActiveTab] = useState("card") // "card" | "column"
+  const [cardTitle, setCardTitle] = useState("")
+  const [selectedColumnId, setSelectedColumnId] = useState(
+    columns[0]?.id || ""
+  )
+  const [cardPosition, setCardPosition] = useState("top") // "top" by default
+  const [columnTitle, setColumnTitle] = useState("")
+
+  const cardInputRef = useRef(null)
+  const columnInputRef = useRef(null)
+
+  // Auto focus input when modal opens or tab changes
+  useEffect(() => {
+    if (activeTab === "card") {
+      cardInputRef.current?.focus()
+    } else {
+      columnInputRef.current?.focus()
+    }
+  }, [activeTab])
+
+  // Ensure selectedColumnId defaults to an existing column
+  useEffect(() => {
+    if (!selectedColumnId && columns.length > 0) {
+      setSelectedColumnId(columns[0].id)
+    }
+  }, [columns, selectedColumnId])
+
+  /**
+   * Handles creating a new card
+   * @param {React.FormEvent} e - Form event
+   */
+  const handleCreateCard = (e) => {
+    e.preventDefault()
+    if (!cardTitle.trim() || !selectedColumnId) {
+      return
+    }
+
+    onAddCard(
+      selectedColumnId,
+      {
+        title: cardTitle.trim()
+      },
+      cardPosition
+    )
+
+    setCardTitle("")
+    onClose()
+  }
+
+  /**
+   * Handles creating a new column
+   * @param {React.FormEvent} e - Form event
+   */
+  const handleCreateColumn = (e) => {
+    e.preventDefault()
+    if (!columnTitle.trim()) {
+      return
+    }
+
+    onAddColumn(columnTitle.trim())
+    setColumnTitle("")
+    onClose()
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-md rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-800">
+          <div className="flex items-center gap-2.5 text-indigo-400">
+            <div className="w-8 h-8 rounded-lg bg-indigo-600/20 flex items-center justify-center">
+              <Plus className="w-4 h-4 text-indigo-400" />
+            </div>
+            <div>
+              <h3 className="text-sm sm:text-base font-bold text-white">
+                Adicionar ao Quadro
+              </h3>
+              <p className="text-[11px] text-slate-400">
+                Crie um novo cartão ou adicione uma nova coluna
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Tab Selection */}
+        <div className="p-3 bg-slate-900/60 border-b border-slate-800 flex gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveTab("card")}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-semibold transition-all ${
+              activeTab === "card"
+                ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                : "bg-slate-800/80 text-slate-300 hover:bg-slate-800 hover:text-white"
+            }`}
+          >
+            <CreditCard className="w-3.5 h-3.5" />
+            <span>Novo Cartão</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("column")}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-semibold transition-all ${
+              activeTab === "column"
+                ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                : "bg-slate-800/80 text-slate-300 hover:bg-slate-800 hover:text-white"
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Nova Coluna</span>
+          </button>
+        </div>
+
+        {/* Content Area */}
+        <div className="p-5">
+          {/* TAB 1: NEW CARD */}
+          {activeTab === "card" && (
+            <form onSubmit={handleCreateCard} className="space-y-4">
+              {/* Card Title */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-200 mb-1.5">
+                  Título do Cartão <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  ref={cardInputRef}
+                  type="text"
+                  value={cardTitle}
+                  onChange={(e) => setCardTitle(e.target.value)}
+                  placeholder="Ex: Atualizar documentação do projeto..."
+                  required
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-slate-800/90 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                />
+              </div>
+
+              {/* Column Selector */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-200 mb-1.5">
+                  Coluna de Destino <span className="text-rose-400">*</span>
+                </label>
+                {columns.length > 0 ? (
+                  <select
+                    value={selectedColumnId}
+                    onChange={(e) => setSelectedColumnId(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl bg-slate-800/90 border border-slate-700 text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
+                  >
+                    {columns.map((col) => (
+                      <option key={col.id} value={col.id}>
+                        {col.title}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <p className="text-xs text-amber-400">
+                    Crie uma coluna primeiro antes de adicionar cartões.
+                  </p>
+                )}
+              </div>
+
+              {/* Card Position (Top by default vs Bottom) */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-200 mb-1.5">
+                  Posição na Coluna
+                </label>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {/* Option: Top (Default) */}
+                  <button
+                    type="button"
+                    onClick={() => setCardPosition("top")}
+                    className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all ${
+                      cardPosition === "top"
+                        ? "border-indigo-500 bg-indigo-500/10 ring-2 ring-indigo-500/30 text-white"
+                        : "border-slate-700 bg-slate-800/60 text-slate-300 hover:border-slate-600 hover:bg-slate-800"
+                    }`}
+                  >
+                    <div
+                      className={`w-6 h-6 rounded-lg flex items-center justify-center ${
+                        cardPosition === "top"
+                          ? "bg-indigo-600 text-white"
+                          : "bg-slate-700 text-slate-400"
+                      }`}
+                    >
+                      <ArrowUp className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="block text-xs font-bold leading-tight">
+                        Topo
+                      </span>
+                      <span className="block text-[10px] text-slate-400">
+                        Início (Padrão)
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Option: Bottom */}
+                  <button
+                    type="button"
+                    onClick={() => setCardPosition("bottom")}
+                    className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all ${
+                      cardPosition === "bottom"
+                        ? "border-indigo-500 bg-indigo-500/10 ring-2 ring-indigo-500/30 text-white"
+                        : "border-slate-700 bg-slate-800/60 text-slate-300 hover:border-slate-600 hover:bg-slate-800"
+                    }`}
+                  >
+                    <div
+                      className={`w-6 h-6 rounded-lg flex items-center justify-center ${
+                        cardPosition === "bottom"
+                          ? "bg-indigo-600 text-white"
+                          : "bg-slate-700 text-slate-400"
+                      }`}
+                    >
+                      <ArrowDown className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="block text-xs font-bold leading-tight">
+                        Fim
+                      </span>
+                      <span className="block text-[10px] text-slate-400">
+                        Final da coluna
+                      </span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-3.5 py-2 text-xs font-medium rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={!cardTitle.trim() || !selectedColumnId}
+                  className="px-4 py-2 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Criar Cartão
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* TAB 2: NEW COLUMN */}
+          {activeTab === "column" && (
+            <form onSubmit={handleCreateColumn} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-200 mb-1.5">
+                  Nome da Nova Coluna <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  ref={columnInputRef}
+                  type="text"
+                  value={columnTitle}
+                  onChange={(e) => setColumnTitle(e.target.value)}
+                  placeholder="Ex: Em Progresso, Validação, etc."
+                  required
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-slate-800/90 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                />
+              </div>
+
+              {/* Information Notice */}
+              <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/60 flex items-start gap-2.5">
+                <Layers className="w-4 h-4 text-indigo-400 mt-0.5 flex-shrink-0" />
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  A nova coluna será adicionada como a{" "}
+                  <strong className="text-white">última coluna</strong> do quadro.
+                  Você pode arrastar e reordenar as colunas a qualquer momento.
+                </p>
+              </div>
+
+              {/* Actions */}
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-3.5 py-2 text-xs font-medium rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={!columnTitle.trim()}
+                  className="px-4 py-2 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Adicionar Coluna
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
