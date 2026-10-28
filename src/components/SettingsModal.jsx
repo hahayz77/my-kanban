@@ -18,6 +18,7 @@ import {
   getTrelloColor
 } from "../utils/trelloColors"
 import { TrelloPatternIcon } from "./TrelloPatternIcon"
+import { confirmDeleteToast, notifySuccess } from "../utils/toastUtils"
 
 /**
  * SettingsModal provides a wide, centralized settings center for Tags and Layout (Column Width, Card Height, Themes)
@@ -113,11 +114,13 @@ export const SettingsModal = ({
         color: labelFormColor,
         oldName: oldLabel?.name
       })
+      notifySuccess("Etiqueta atualizada com sucesso!")
     } else {
       onAddLabel({
         name: trimmed,
         color: labelFormColor
       })
+      notifySuccess("Etiqueta criada com sucesso!")
     }
 
     setIsFormOpen(false)
@@ -399,13 +402,12 @@ export const SettingsModal = ({
                         <button
                           type="button"
                           onClick={() => {
-                            if (
-                              confirm(
-                                `Excluir a etiqueta "${lbl.name}"? Ela será removida de ${usageCount} cartões.`
-                              )
-                            ) {
-                              onDeleteLabel(lbl.id)
-                            }
+                            confirmDeleteToast({
+                              message: `Excluir a etiqueta "${lbl.name || "sem nome"}"? Ela será removida de ${usageCount} cartões.`,
+                              title: "Excluir Etiqueta",
+                              onConfirm: () => onDeleteLabel(lbl.id),
+                              successMessage: "Etiqueta excluída com sucesso!"
+                            })
                           }}
                           className="p-1 text-slate-400 hover:text-rose-400 hover:bg-slate-700 rounded transition-colors"
                           title="Excluir etiqueta"

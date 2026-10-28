@@ -14,6 +14,7 @@ import {
   getTrelloColor
 } from "../utils/trelloColors"
 import { TrelloPatternIcon } from "./TrelloPatternIcon"
+import { notifySuccess } from "../utils/toastUtils"
 
 /**
  * AddModal lets users add new cards (specifying column and position, defaulting to top),
@@ -90,6 +91,7 @@ export const AddModal = ({
       },
       cardPosition
     )
+    notifySuccess("Cartão adicionado com sucesso!")
 
     setCardTitle("")
     onClose()
@@ -106,6 +108,7 @@ export const AddModal = ({
     }
 
     onAddColumn(columnTitle.trim())
+    notifySuccess("Coluna adicionada com sucesso!")
     setColumnTitle("")
     onClose()
   }
@@ -126,6 +129,7 @@ export const AddModal = ({
         name: trimmed,
         color: labelColor
       })
+      notifySuccess("Etiqueta adicionada com sucesso!")
     }
 
     setLabelName("")

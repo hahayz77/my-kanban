@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react"
 import { X, Upload, FileText, CheckCircle, AlertCircle, Sparkles } from "lucide-react"
 import { readJsonFile } from "../services/backupService"
+import { notifySuccess } from "../utils/toastUtils"
 
 /**
  * ImportModal allows importing either a Trello export JSON or an internal Kanban backup JSON
@@ -48,10 +49,12 @@ export const ImportModal = ({
       // Check if Trello format
       if (Array.isArray(data.lists) && Array.isArray(data.cards)) {
         await onImportTrello(data)
+        notifySuccess("Quadro do Trello importado com sucesso!")
         onClose()
       } else if (data.columns && data.cards) {
         // Internal backup format
         await onImportBackup(data)
+        notifySuccess("Backup importado com sucesso!")
         onClose()
       } else {
         throw new Error(
@@ -79,6 +82,7 @@ export const ImportModal = ({
       }
       const trelloData = await response.json()
       await onImportTrello(trelloData)
+      notifySuccess("Backup padrão carregado com sucesso!")
       onClose()
     } catch (error) {
       setErrorMessage(error.message || "Falha ao carregar backup padrão")

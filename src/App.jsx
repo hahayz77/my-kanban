@@ -9,6 +9,7 @@ import { DriveConfigModal } from "./components/DriveConfigModal"
 import { AddModal } from "./components/AddModal"
 import { BackupConfirmModal } from "./components/BackupConfirmModal"
 import { BOARD_ENVIRONMENT_THEMES } from "./utils/trelloColors"
+import { Toaster } from "react-hot-toast"
 
 /**
  * Main application component coordinating Kanban board, modals, and persistence
@@ -207,6 +208,37 @@ export const App = () => {
         onClose={() => setIsImportModalOpen(false)}
         onImportTrello={importTrello}
         onImportBackup={importBackup}
+      />
+
+      {/* Global Dark Mode Toast Container */}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3500,
+          style: {
+            background: "#0f172a",
+            color: "#f8fafc",
+            border: "1px solid #334155",
+            borderRadius: "12px",
+            fontSize: "12px",
+            fontWeight: "500",
+            boxShadow:
+              "0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)",
+            padding: "10px 14px"
+          },
+          success: {
+            iconTheme: {
+              primary: "#10b981",
+              secondary: "#0f172a"
+            }
+          },
+          error: {
+            iconTheme: {
+              primary: "#f43f5e",
+              secondary: "#0f172a"
+            }
+          }
+        }}
       />
     </div>
   )

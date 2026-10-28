@@ -21,6 +21,7 @@ import {
   BUILTIN_STICKERS,
   renderCardSticker
 } from "../utils/trelloStickers"
+import { confirmDeleteToast, notifySuccess } from "../utils/toastUtils"
 
 /**
  * CardModal provides full viewing and editing capabilities for a Kanban card with 3 Trello cover modes and stickers
@@ -163,23 +164,29 @@ export const CardModal = ({
   }
 
   /**
-   * Removes a check item from a checklist
+   * Removes a check item from a checklist with toast confirmation
    * @param {string} checklistId - ID of checklist
    * @param {string} itemId - ID of item
    */
   const handleDeleteCheckItem = (checklistId, itemId) => {
-    const updated = checklists.map((cl) => {
-      if (cl.id !== checklistId) {
-        return cl
-      }
-      return {
-        ...cl,
-        checkItems: (cl.checkItems || []).filter((item) => item.id !== itemId)
-      }
+    confirmDeleteToast({
+      message: "Excluir este item da checklist?",
+      title: "Excluir Item",
+      onConfirm: () => {
+        const updated = checklists.map((cl) => {
+          if (cl.id !== checklistId) {
+            return cl
+          }
+          return {
+            ...cl,
+            checkItems: (cl.checkItems || []).filter((item) => item.id !== itemId)
+          }
+        })
+        setChecklists(updated)
+        handleAutoSave({ checklists: updated })
+      },
+      successMessage: "Item da checklist removido!"
     })
-
-    setChecklists(updated)
-    handleAutoSave({ checklists: updated })
   }
 
   /**
@@ -203,16 +210,25 @@ export const CardModal = ({
     setNewChecklistTitle("")
     setIsAddingChecklist(false)
     handleAutoSave({ checklists: updated })
+    notifySuccess("Checklist adicionada com sucesso!")
   }
 
   /**
-   * Deletes a checklist
+   * Deletes a checklist with toast confirmation
    * @param {string} checklistId - ID of checklist
    */
   const handleDeleteChecklist = (checklistId) => {
-    const updated = checklists.filter((cl) => cl.id !== checklistId)
-    setChecklists(updated)
-    handleAutoSave({ checklists: updated })
+    const target = checklists.find((cl) => cl.id === checklistId)
+    confirmDeleteToast({
+      message: `Excluir a checklist "${target?.name || target?.title || "Checklist"}" e todos os seus itens?`,
+      title: "Excluir Checklist",
+      onConfirm: () => {
+        const updated = checklists.filter((cl) => cl.id !== checklistId)
+        setChecklists(updated)
+        handleAutoSave({ checklists: updated })
+      },
+      successMessage: "Checklist excluída com sucesso!"
+    })
   }
 
   /**
@@ -307,14 +323,22 @@ export const CardModal = ({
     }
     setSticker(newSticker)
     handleAutoSave({ sticker: newSticker })
+    notifySuccess("Sticker aplicado ao cartão!")
   }
 
   /**
-   * Removes current sticker
+   * Removes current sticker with toast confirmation
    */
   const handleRemoveSticker = () => {
-    setSticker(null)
-    handleAutoSave({ sticker: null })
+    confirmDeleteToast({
+      message: "Remover o sticker deste cartão?",
+      title: "Remover Sticker",
+      onConfirm: () => {
+        setSticker(null)
+        handleAutoSave({ sticker: null })
+      },
+      successMessage: "Sticker removido do cartão!"
+    })
   }
 
   /**
@@ -337,6 +361,7 @@ export const CardModal = ({
       }
       setSticker(newSticker)
       handleAutoSave({ sticker: newSticker })
+      notifySuccess("Sticker personalizado carregado!")
     }
     reader.readAsDataURL(file)
   }
@@ -1136,10 +1161,15 @@ export const CardModal = ({
           <button
             type="button"
             onClick={() => {
-              if (confirm(`Excluir o cartão "${card.title}"?`)) {
-                onDelete(card.id)
-                onClose()
-              }
+              confirmDeleteToast({
+                message: `Excluir definitivamente o cartão "${card.title}"?`,
+                title: "Excluir Cartão",
+                onConfirm: () => {
+                  onDelete(card.id)
+                  onClose()
+                },
+                successMessage: "Cartão excluído com sucesso!"
+              })
             }}
             className="flex items-center gap-1.5 text-xs text-rose-400 hover:text-rose-300 py-1 px-2.5 rounded-lg hover:bg-rose-500/10 transition-colors"
           >

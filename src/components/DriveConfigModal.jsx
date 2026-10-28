@@ -1,5 +1,6 @@
 import React, { useState } from "react"
 import { X, Cloud, CheckCircle, RefreshCw, Key, ExternalLink } from "lucide-react"
+import { notifySuccess } from "../utils/toastUtils"
 
 /**
  * DriveConfigModal lets users configure their Google Client ID and manage Drive connection
@@ -34,6 +35,7 @@ export const DriveConfigModal = ({
   const handleSave = () => {
     onSaveClientId(clientIdInput.trim())
     setIsSaved(true)
+    notifySuccess("Client ID do Google salvo com sucesso!")
     setTimeout(() => setIsSaved(false), 2000)
   }
 
@@ -99,7 +101,10 @@ export const DriveConfigModal = ({
               {accessToken && (
                 <button
                   type="button"
-                  onClick={onSyncNow}
+                  onClick={() => {
+                    onSyncNow()
+                    notifySuccess("Sincronização com o Drive iniciada!")
+                  }}
                   className="flex items-center justify-center gap-1.5 px-3 py-1 text-xs text-slate-300 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
                 >
                   <RefreshCw className="w-3 h-3" />

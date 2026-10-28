@@ -2,6 +2,7 @@ import React, { useState } from "react"
 import { Droppable, Draggable } from "@hello-pangea/dnd"
 import { Plus, Trash2, Edit2, X, Check } from "lucide-react"
 import { CardItem } from "./CardItem"
+import { confirmDeleteToast, notifySuccess } from "../utils/toastUtils"
 
 /**
  * Column component representing a Kanban column with configurable width and card density
@@ -73,6 +74,7 @@ export const Column = ({
     }
 
     onAddCard(column.id, { title: trimmed })
+    notifySuccess("Cartão adicionado com sucesso!")
     setNewCardTitle("")
     setIsAddingCard(false)
   }
@@ -144,13 +146,12 @@ export const Column = ({
               <button
                 type="button"
                 onClick={() => {
-                  if (
-                    confirm(
-                      `Excluir a lista "${column.title}" e todos os ${cards.length} cartões nela?`
-                    )
-                  ) {
-                    onDeleteColumn(column.id)
-                  }
+                  confirmDeleteToast({
+                    message: `Excluir a lista "${column.title}" e todos os ${cards.length} cartões nela?`,
+                    title: "Excluir Coluna",
+                    onConfirm: () => onDeleteColumn(column.id),
+                    successMessage: "Coluna excluída com sucesso!"
+                  })
                 }}
                 className="p-1 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors"
                 title="Excluir lista"

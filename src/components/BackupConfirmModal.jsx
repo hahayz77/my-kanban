@@ -1,5 +1,6 @@
 import React from "react"
 import { X, Download, ShieldCheck, Database, Layers, CreditCard } from "lucide-react"
+import { notifySuccess } from "../utils/toastUtils"
 
 /**
  * BackupConfirmModal prompts the user before downloading the complete JSON backup file
@@ -26,6 +27,7 @@ export const BackupConfirmModal = ({
 
   const handleConfirm = () => {
     onConfirm()
+    notifySuccess("Backup baixado com sucesso!")
     onClose()
   }
 
