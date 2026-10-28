@@ -299,12 +299,22 @@ export const CardItem = ({
                       <div
                         className={`flex items-center gap-2 text-slate-400 ${ds.footer}`}
                       >
-                        {card.desc && (
+                        {(card.desc || card.pendingDesc) && (
                           <div
                             className="flex items-center gap-0.5 hover:text-slate-200"
-                            title="Possui descrição"
+                            title={card.hasPendingChanges ? "Possui alterações pendentes de confirmação" : "Possui descrição"}
                           >
                             <AlignLeft className={ds.badgeIcon} />
+                          </div>
+                        )}
+
+                        {card.hasPendingChanges && (
+                          <div
+                            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-950/60 text-amber-300 border border-amber-500/40"
+                            title="Cartão com alterações pendentes de aprovação"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                            <span>Pendente</span>
                           </div>
                         )}
 
@@ -424,12 +434,22 @@ export const CardItem = ({
                     <div
                       className={`flex items-center gap-2 text-slate-400 ${ds.footer}`}
                     >
-                      {card.desc && (
+                      {(card.desc || card.pendingDesc) && (
                         <div
                           className="flex items-center gap-0.5 hover:text-slate-200"
-                          title="Possui descrição"
+                          title={card.hasPendingChanges ? "Possui alterações pendentes de confirmação" : "Possui descrição"}
                         >
                           <AlignLeft className={ds.badgeIcon} />
+                        </div>
+                      )}
+
+                      {card.hasPendingChanges && (
+                        <div
+                          className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-950/60 text-amber-300 border border-amber-500/40"
+                          title="Cartão com alterações pendentes de aprovação"
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                          <span>Pendente</span>
                         </div>
                       )}
 

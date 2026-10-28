@@ -8,7 +8,7 @@ import { ImportModal } from "./components/ImportModal"
 import { DriveConfigModal } from "./components/DriveConfigModal"
 import { AddModal } from "./components/AddModal"
 import { BackupConfirmModal } from "./components/BackupConfirmModal"
-import { BOARD_ENVIRONMENT_THEMES } from "./utils/trelloColors"
+import { BOARD_ENVIRONMENT_THEMES, getBoardFont } from "./utils/trelloColors"
 import { Toaster } from "react-hot-toast"
 
 /**
@@ -22,6 +22,7 @@ export const App = () => {
     cards,
     boardLabels,
     boardTheme,
+    boardFont,
     columnWidth,
     cardDensity,
     isLoaded,
@@ -32,6 +33,7 @@ export const App = () => {
     googleClientId,
     saveGoogleClientId,
     updateBoardTheme,
+    updateBoardFont,
     updateColumnWidth,
     updateCardDensity,
     addBoardLabel,
@@ -87,6 +89,11 @@ export const App = () => {
     )
   }, [boardTheme])
 
+  // Current active typography font style
+  const currentFontObj = useMemo(() => {
+    return getBoardFont(boardFont)
+  }, [boardFont])
+
   if (!isLoaded) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-900 text-slate-400">
@@ -100,7 +107,8 @@ export const App = () => {
 
   return (
     <div
-      className={`flex flex-col h-screen w-screen overflow-hidden text-slate-100 transition-colors duration-500 ${currentThemeObj.background}`}
+      className={`flex flex-col h-screen w-screen overflow-hidden text-slate-100 transition-colors duration-500 ${currentThemeObj.background} ${currentFontObj.className}`}
+      style={{ fontFamily: currentFontObj.fontFamily }}
     >
       {/* Top Navbar */}
       <Navbar
@@ -185,17 +193,25 @@ export const App = () => {
         />
       )}
 
-      {/* Settings Modal (Tags, Environment Colors, Column Width, Card Density) */}
+      {/* Settings Modal (Tags, Environment Colors, Column Width, Card Density, Typography, User) */}
       <SettingsModal
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
         boardLabels={boardLabels}
         cards={cards}
+        columns={columns}
+        onOpenCard={(card) => {
+          setIsSettingsModalOpen(false)
+          setSelectedCardId(card.id)
+        }}
+        onUpdateCard={updateCard}
         onAddLabel={addBoardLabel}
         onUpdateLabel={updateBoardLabel}
         onDeleteLabel={deleteBoardLabel}
         boardTheme={boardTheme}
         onSelectTheme={updateBoardTheme}
+        boardFont={boardFont}
+        onSelectFont={updateBoardFont}
         columnWidth={columnWidth}
         onUpdateColumnWidth={updateColumnWidth}
         cardDensity={cardDensity}

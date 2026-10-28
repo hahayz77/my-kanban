@@ -281,3 +281,58 @@ export const BOARD_ENVIRONMENT_THEMES = [
     background: "bg-black"
   }
 ]
+
+/**
+ * 5 curated high-quality UI fonts plus developer monospace for code
+ */
+export const BOARD_FONT_OPTIONS = [
+  {
+    id: "inter",
+    name: "Inter",
+    category: "Padrão UI",
+    desc: "Fonte contemporânea de alta legibilidade, limpa e balanceada.",
+    className: "font-inter",
+    fontFamily: "'Inter', system-ui, sans-serif"
+  },
+  {
+    id: "opensans",
+    name: "Open Sans",
+    category: "Clássica e Confortável",
+    desc: "Tipografia neutra e confortável para longas leituras e notas.",
+    className: "font-opensans",
+    fontFamily: "'Open Sans', system-ui, sans-serif"
+  },
+  {
+    id: "roboto",
+    name: "Roboto",
+    category: "Google Material",
+    desc: "Visual geométrico e natural, padrão do ecossistema Google e Android.",
+    className: "font-roboto",
+    fontFamily: "'Roboto', system-ui, sans-serif"
+  },
+  {
+    id: "poppins",
+    name: "Poppins",
+    category: "Geométrica Marcante",
+    desc: "Curvas modernas, visual expressivo e títulos bem definidos.",
+    className: "font-poppins",
+    fontFamily: "'Poppins', system-ui, sans-serif"
+  },
+  {
+    id: "jakarta",
+    name: "Plus Jakarta Sans",
+    category: "Tecnologia e Design",
+    desc: "Tipografia refinada e moderna utilizada nas principais plataformas tech.",
+    className: "font-jakarta",
+    fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif"
+  }
+]
+
+/**
+ * Finds font definition object by ID with fallback to Inter
+ * @param {string} fontId - Font identifier
+ * @returns {Object} Font option object
+ */
+export const getBoardFont = (fontId = "inter") => {
+  return BOARD_FONT_OPTIONS.find((f) => f.id === fontId) || BOARD_FONT_OPTIONS[0]
+}

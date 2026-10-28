@@ -2,6 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Font Family Classes */
+.font-inter {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.font-opensans {
+  font-family: 'Open Sans', system-ui, sans-serif;
+}
+
+.font-roboto {
+  font-family: 'Roboto', system-ui, sans-serif;
+}
+
+.font-poppins {
+  font-family: 'Poppins', system-ui, sans-serif;
+}
+
+.font-jakarta {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+/* Monospace font for code blocks and inline code */
+pre, code, kbd, samp, .font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+}
+
 /* Custom scrollbars for columns and board */
 ::-webkit-scrollbar {
   width: 8px;

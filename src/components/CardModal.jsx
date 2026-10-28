@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import {
   X,
   AlignLeft,
@@ -22,6 +22,8 @@ import {
   renderCardSticker
 } from "../utils/trelloStickers"
 import { confirmDeleteToast, notifySuccess } from "../utils/toastUtils"
+import { MarkdownViewer } from "./MarkdownViewer"
+import { normalizeLinkKey } from "./LinkPreviewCard"
 
 /**
  * CardModal provides full viewing and editing capabilities for a Kanban card with 3 Trello cover modes and stickers
@@ -48,8 +50,19 @@ export const CardModal = ({
     return null
   }
 
+  const savedBaseline = card.desc || ""
+  const initialHasDraft = Boolean(
+    card.hasPendingChanges &&
+    card.pendingDesc !== null &&
+    card.pendingDesc !== undefined &&
+    card.pendingDesc !== savedBaseline
+  )
+  const initialDesc = initialHasDraft ? card.pendingDesc : savedBaseline
+
   const [title, setTitle] = useState(card.title || "")
-  const [desc, setDesc] = useState(card.desc || "")
+  const [desc, setDesc] = useState(initialDesc)
+  const [confirmedDesc, setConfirmedDesc] = useState(savedBaseline)
+  const [hasPendingChanges, setHasPendingChanges] = useState(initialHasDraft)
   const [labels, setLabels] = useState(card.labels || [])
   const [checklists, setChecklists] = useState(card.checklists || [])
   const [due, setDue] = useState(card.due ? card.due.slice(0, 10) : "")
@@ -59,6 +72,31 @@ export const CardModal = ({
     card.cover?.size === "full" ? "full" : "normal"
   )
   const [sticker, setSticker] = useState(card.sticker || null)
+  const [linkSizes, setLinkSizes] = useState(card.linkSizes || {})
+
+  // Synchronize state when card identity changes
+  useEffect(() => {
+    const baseline = card.desc || ""
+    const hasDraft = Boolean(
+      card.hasPendingChanges &&
+      card.pendingDesc !== null &&
+      card.pendingDesc !== undefined &&
+      card.pendingDesc !== baseline
+    )
+    const activeText = hasDraft ? card.pendingDesc : baseline
+    setDesc(activeText)
+    setConfirmedDesc(baseline)
+    setHasPendingChanges(hasDraft)
+    setTitle(card.title || "")
+    setLabels(card.labels || [])
+    setChecklists(card.checklists || [])
+    setDue(card.due ? card.due.slice(0, 10) : "")
+    setDueComplete(Boolean(card.dueComplete))
+    setCoverColor(card.cover?.color || null)
+    setCoverSize(card.cover?.size === "full" ? "full" : "normal")
+    setSticker(card.sticker || null)
+    setLinkSizes(card.linkSizes || {})
+  }, [card.id])
 
   const [activeTab, setActiveTab] = useState(null) // "cover" | "labels" | "sticker" | null
   const [labelSearch, setLabelSearch] = useState("")
@@ -86,22 +124,96 @@ export const CardModal = ({
       "coverSize" in updatedFields ? updatedFields.coverSize : coverSize
     const nextSticker =
       "sticker" in updatedFields ? updatedFields.sticker : sticker
+    const nextLinkSizes =
+      "linkSizes" in updatedFields ? updatedFields.linkSizes : linkSizes
+    const nextConfirmedDesc =
+      "desc" in updatedFields ? updatedFields.desc : confirmedDesc
+    const nextPendingDesc =
+      "pendingDesc" in updatedFields
+        ? updatedFields.pendingDesc
+        : (hasPendingChanges ? desc : null)
+    const nextHasPendingChanges =
+      "hasPendingChanges" in updatedFields
+        ? updatedFields.hasPendingChanges
+        : hasPendingChanges
 
     const updatedCard = {
       ...card,
       title,
-      desc,
+      desc: nextConfirmedDesc,
+      pendingDesc: nextPendingDesc,
+      hasPendingChanges: nextHasPendingChanges,
       labels,
       checklists,
       due: due ? new Date(due).toISOString() : null,
       dueComplete,
       cover: nextColor ? { color: nextColor, size: nextSize } : null,
       sticker: nextSticker,
+      linkSizes: nextLinkSizes,
       ...updatedFields
     }
     delete updatedCard.coverColor
     delete updatedCard.coverSize
     onSave(card.id, updatedCard)
+  }
+
+  /**
+   * Handles draft description text changes while editing
+   * Immediately persists draft to card so closing modal/clicking outside preserves it
+   * @param {string} newVal - New description text
+   */
+  const handleDescChange = (newVal) => {
+    setDesc(newVal)
+    const isPending = newVal !== confirmedDesc
+    setHasPendingChanges(isPending)
+    handleAutoSave({
+      pendingDesc: isPending ? newVal : null,
+      hasPendingChanges: isPending
+    })
+  }
+
+  /**
+   * Confirms and officially saves description, clearing pending draft state
+   * @param {string} confirmedText - Confirmed description text
+   */
+  const handleConfirmSaveDesc = (confirmedText) => {
+    setDesc(confirmedText)
+    setConfirmedDesc(confirmedText)
+    setHasPendingChanges(false)
+    handleAutoSave({
+      desc: confirmedText,
+      pendingDesc: null,
+      hasPendingChanges: false
+    })
+  }
+
+  /**
+   * Cancels and reverts pending description back to confirmed baseline
+   */
+  const handleCancelDesc = () => {
+    const restoredText = confirmedDesc
+    setDesc(restoredText)
+    setHasPendingChanges(false)
+    handleAutoSave({
+      desc: restoredText,
+      pendingDesc: null,
+      hasPendingChanges: false
+    })
+  }
+
+  /**
+   * Updates link preview size preference for this specific card
+   * @param {string} url - Target URL
+   * @param {string} newSize - "p" | "m" | "g"
+   */
+  const handleUpdateLinkSize = (url, newSize) => {
+    const key = normalizeLinkKey(url)
+    const updated = {
+      ...linkSizes,
+      [key]: newSize
+    }
+    setLinkSizes(updated)
+    handleAutoSave({ linkSizes: updated })
   }
 
   /**
@@ -968,21 +1080,19 @@ export const CardModal = ({
             </div>
           </div>
 
-          {/* Description Section */}
+          {/* Description Section with Markdown Preview / Code Toggle */}
           <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <AlignLeft className="w-4 h-4 text-slate-400" />
-              <h4 className="text-xs font-semibold text-slate-200">
-                Descrição
-              </h4>
-            </div>
-            <textarea
-              rows={3}
+            <MarkdownViewer
               value={desc}
-              onChange={(e) => setDesc(e.target.value)}
-              onBlur={() => handleAutoSave({ desc })}
-              placeholder="Adicione uma descrição detalhada para este cartão..."
-              className="w-full p-2.5 text-xs bg-slate-800/80 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-y"
+              savedValue={confirmedDesc}
+              hasPendingChanges={hasPendingChanges}
+              onChange={handleDescChange}
+              onSave={handleConfirmSaveDesc}
+              onCancel={handleCancelDesc}
+              linkSizes={linkSizes}
+              onUpdateLinkSize={handleUpdateLinkSize}
+              placeholder='Torne sua descrição ainda melhor. Digite "/" para inserir conteúdo, formatação e muito mais.'
+              allowUpload={true}
             />
           </div>
 

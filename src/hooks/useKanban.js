@@ -21,6 +21,7 @@ export const useKanban = () => {
   const [cards, setCards] = useState([])
   const [boardLabels, setBoardLabels] = useState([])
   const [boardTheme, setBoardTheme] = useState("galaxy")
+  const [boardFont, setBoardFont] = useState("inter")
   const [columnWidth, setColumnWidth] = useState(220)
   const [cardDensity, setCardDensity] = useState("compact") // "ultra-compact" | "compact" | "normal" | "comfortable"
   const [isLoaded, setIsLoaded] = useState(false)
@@ -177,6 +178,7 @@ export const useKanban = () => {
       const savedToken = await getMetadata("accessToken")
       const savedLabels = await getMetadata("boardLabels")
       const savedTheme = await getMetadata("boardTheme")
+      const savedFont = await getMetadata("boardFont")
       const savedWidth = await getMetadata("columnWidth")
       const savedDensity = await getMetadata("cardDensity")
 
@@ -191,6 +193,9 @@ export const useKanban = () => {
       }
       if (savedTheme) {
         setBoardTheme(savedTheme)
+      }
+      if (savedFont) {
+        setBoardFont(savedFont)
       }
       if (savedWidth) {
         setColumnWidth(Number(savedWidth))
@@ -313,6 +318,10 @@ export const useKanban = () => {
             setBoardTheme(backupData.settings.theme)
             await setMetadata("boardTheme", backupData.settings.theme)
           }
+          if (backupData.settings.font) {
+            setBoardFont(backupData.settings.font)
+            await setMetadata("boardFont", backupData.settings.font)
+          }
           if (backupData.settings.columnWidth) {
             setColumnWidth(Number(backupData.settings.columnWidth))
             await setMetadata("columnWidth", Number(backupData.settings.columnWidth))
@@ -351,11 +360,25 @@ export const useKanban = () => {
       labels: boardLabels,
       settings: {
         theme: boardTheme,
+        font: boardFont,
         columnWidth,
         cardDensity
       }
     })
-  }, [board, columns, cards, boardLabels, boardTheme, columnWidth, cardDensity])
+  }, [board, columns, cards, boardLabels, boardTheme, boardFont, columnWidth, cardDensity])
+
+  /**
+   * Updates workspace font family and persists to metadata
+   * @param {string} fontId - Font identifier
+   */
+  const updateBoardFont = useCallback(
+    async (fontId) => {
+      setBoardFont(fontId)
+      await setMetadata("boardFont", fontId)
+      debouncedDriveSync()
+    },
+    [debouncedDriveSync]
+  )
 
   /**
    * Updates workspace theme and persists to metadata
@@ -625,7 +648,8 @@ export const useKanban = () => {
           due: cardData.due || null,
           dueComplete: false,
           cover: cardData.cover || null,
-          checklists: cardData.checklists || []
+          checklists: cardData.checklists || [],
+          linkSizes: cardData.linkSizes || {}
         }
         const shiftedColCards = colCards.map((c, idx) => ({
           ...c,
@@ -643,7 +667,8 @@ export const useKanban = () => {
           due: cardData.due || null,
           dueComplete: false,
           cover: cardData.cover || null,
-          checklists: cardData.checklists || []
+          checklists: cardData.checklists || [],
+          linkSizes: cardData.linkSizes || {}
         }
         updatedColCards = [...colCards, newCard]
       }
@@ -928,6 +953,7 @@ export const useKanban = () => {
     cards,
     boardLabels,
     boardTheme,
+    boardFont,
     columnWidth,
     cardDensity,
     isLoaded,
@@ -938,6 +964,7 @@ export const useKanban = () => {
     googleClientId,
     saveGoogleClientId,
     updateBoardTheme,
+    updateBoardFont,
     updateColumnWidth,
     updateCardDensity,
     addBoardLabel,
