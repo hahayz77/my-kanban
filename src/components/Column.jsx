@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useRef } from "react"
 import { Droppable, Draggable } from "@hello-pangea/dnd"
 import { Plus, MoreVertical, X } from "lucide-react"
 import { CardItem } from "./CardItem"
@@ -35,6 +35,7 @@ export const Column = ({
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false)
   const [isAddingCard, setIsAddingCard] = useState(false)
   const [newCardTitle, setNewCardTitle] = useState("")
+  const cardsContainerRef = useRef(null)
 
   /**
    * Submits new quick card
@@ -47,10 +48,13 @@ export const Column = ({
       return
     }
 
-    onAddCard(column.id, { title: trimmed }, "bottom")
+    onAddCard(column.id, { title: trimmed }, "top")
     notifySuccess("Cartão adicionado com sucesso!")
     setNewCardTitle("")
     setIsAddingCard(false)
+    setTimeout(() => {
+      cardsContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" })
+    }, 50)
   }
 
   return (
@@ -104,7 +108,10 @@ export const Column = ({
           <Droppable droppableId={column.id} type="CARD">
             {(dropProvided, dropSnapshot) => (
               <div
-                ref={dropProvided.innerRef}
+                ref={(el) => {
+                  dropProvided.innerRef(el)
+                  cardsContainerRef.current = el
+                }}
                 {...dropProvided.droppableProps}
                 className={`flex-1 p-2 overflow-y-auto min-h-[60px] transition-colors ${
                   dropSnapshot.isDraggingOver
